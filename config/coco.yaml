@@ -1,8 +1,8 @@
 
 # Train/val/test sets
-train: 2007_train.txt  # train txt
-val: 2007_val.txt  # val txt
-test: 2007_val.txt
+train: coco_train.txt  # train txt
+val: coco_val.txt  # val txt
+test: coco_val.txt
 
 anchors: [12, 16,  19, 36,  40, 28,  36, 75,  76, 55,  72, 146,  142, 110,  192, 243,  459, 401]
 

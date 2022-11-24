@@ -65,19 +65,19 @@ class MobileViT(nn.Module):
                            layers=transformer_depth[2], mlp_dim=d_list[2] * 4),
             nn.Conv2d(in_channels=features_list[9], out_channels=features_list[10], kernel_size=1, stride=1, padding=0)
         )
-
-        self.avgpool = nn.AvgPool2d(kernel_size=img_size // 32)
-        self.fc = nn.Linear(features_list[10], num_classes)
+        # classification layer
+        # self.avgpool = nn.AvgPool2d(kernel_size=img_size // 32)
+        # self.fc = nn.Linear(features_list[10], num_classes)
 
     def forward(self, x):
         # Stem
         x = self.stem(x)
-        # Body                [m, m, c]
-        x = self.stage1(x)  # [128, 128, 64]
-        x2 = self.stage2(x)  # [64, 64, 96]
-        x3 = self.stage3(x2)  # [32, 32, 128]
-        x4 = self.stage4(x3)  # [16, 16, 640]
-        # Head
+        # Body
+        x = self.stage1(x)
+        x2 = self.stage2(x)  # [80, 80, 96]
+        x3 = self.stage3(x2)  # [40, 40, 128]
+        x4 = self.stage4(x3)  # [20, 20, 640]
+        # Head for classification
         # x = self.avgpool(x4)
         # x = x.view(x.size(0), -1)
         # x = self.fc(x)
