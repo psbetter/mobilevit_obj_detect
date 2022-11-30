@@ -8,18 +8,19 @@ from utils.utils import get_config
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train classification of CMT model")
-    parser.add_argument('--train', default='config/train.yaml', type=str, help='config of train process')
-    parser.add_argument('--datasets', default='config/coco.yaml', type=str, help='config of datasets')
-    parser.add_argument('--weights_path', default='config/checkpoints.pth', type=str, help='path of weights')
+    parser.add_argument('--config', default='config/config.yaml', type=str, help='config of train process')
+    parser.add_argument('--classes_path', default='config/class_names.txt', type=str, help='file of class names')
+    parser.add_argument('--anchors_path', default='config/anchors.txt', type=str, help='config of anchor')
+    parser.add_argument('--weights_path', default='config/ep030-loss0.136-val_loss0.133.pth', type=str, help='path of weights')
     parser.add_argument('--cuda', default=True, type=bool, help='using cuda or not')
-    parser.add_argument('--mode', default="video", type=str, help='detect video or image')
+    parser.add_argument('--mode', default="fps", type=str, help='detect video or image')
     parser.add_argument("--crop", default=False, type=bool, help="get crop result or not")
     parser.add_argument('--count', default=False, type=bool, help='count objects')
     parser.add_argument('--video_path', default="0", type=str, help='detect file or camera')
     parser.add_argument('--video_save_path', default='', type=str, help='result save path')
     parser.add_argument('--video_fps', default=25.0, type=float, help='fps of video')
     parser.add_argument('--test_interval', default=100, type=int, help='test interval')
-    parser.add_argument('--fps_image_path', default="img/street.jpg", type=str, help='fps image path')
+    parser.add_argument('--fps_image_path', default="E:/PyCharmWorkSpace/datasets/mask/test/649.jpg", type=str, help='fps image path')
     parser.add_argument('--dir_origin_path', default="", type=str, help='dir of images')
     parser.add_argument('--dir_save_path', default="", type=str, help='save path of dir detect')
     parser.add_argument('--letterbox_image', default=False, type=bool, help='letterbox image')
@@ -27,10 +28,11 @@ if __name__ == "__main__":
     parser.add_argument('--nms_iou', default=0.3, type=float, help='iou thresh')
     args = parser.parse_args()
 
-    cfg_train = get_config(args.train)
-    cfg_data = get_config(args.datasets)
+    cfg_train = get_config(args.config)
 
-    model = inference_net(args, cfg_data, cfg_train)
+    cfg_train.pretrained = False
+
+    model = inference_net(args, cfg_train)
 
     if args.mode == "predict":
         while True:

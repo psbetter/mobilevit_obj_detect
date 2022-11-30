@@ -8,13 +8,16 @@ import torch.nn as nn
 from PIL import ImageDraw, ImageFont
 
 from model.mobilevit_yolov4 import MobileVit_YoloV4
-from utils.utils import (cvtColor, preprocess_input, resize_image)
+from utils.utils import (cvtColor, preprocess_input, resize_image, get_classes, get_anchors)
 from utils.utils import DecodeBox
 
 
 class inference_net(object):
 
-    def __init__(self, args, cfg_data, cfg_train):
+    def __init__(self, args, cfg_train):
+        class_names, num_classes = get_classes(args.classes_path)
+        anchors, num_anchors = get_anchors(args.anchors_path)
+
         self.weights_path = args.weights_path
         self.input_shape = cfg_train.input_shape
         self.backbone = cfg_train.backbone
@@ -23,10 +26,10 @@ class inference_net(object):
         self.letterbox_image = args.letterbox_image
         self.cuda = args.cuda
 
-        self.anchors_mask = cfg_data.anchors_mask
-        self.anchors = np.array(cfg_data.anchors).reshape(-1, 2)
-        self.num_classes = len(cfg_data.names)
-        self.class_names = cfg_data.names
+        self.anchors_mask = cfg_train.anchors_mask
+        self.anchors = anchors
+        self.num_classes = num_classes
+        self.class_names = class_names
         self.bbox_util = DecodeBox(self.anchors, self.num_classes, (self.input_shape[0], self.input_shape[1]),
                                    self.anchors_mask)
 
@@ -34,10 +37,10 @@ class inference_net(object):
         hsv_tuples = [(x / self.num_classes, 1., 1.) for x in range(self.num_classes)]
         self.colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
         self.colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), self.colors))
-        self.generate(cfg_data, cfg_train)
+        self.generate(cfg_train)
 
-    def generate(self, cfg_data, cfg_train, onnx=False):
-        self.net = MobileVit_YoloV4(cfg_data, cfg_train)
+    def generate(self, cfg_train, onnx=False):
+        self.net = MobileVit_YoloV4(self.num_classes, cfg_train)
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.net.load_state_dict(torch.load(self.weights_path, map_location=device))
         self.net = self.net.eval()

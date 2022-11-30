@@ -1,17 +1,21 @@
 import torch
 from torch import nn
 
-from model.mobilevitv1 import mobilevit_v1
+from model.mobilevitv1 import mobilevit_v1, mobilevit_xxs
 from model.yolov4_common import make_three_conv, SpatialPyramidPooling, Upsample, conv2d, yolo_head, conv_dw, make_five_conv
 
 
 class MobileVit_YoloV4(nn.Module):
-    def __init__(self, cfg_data, cfg_train):
+    def __init__(self, num_classes, cfg_train):
         super(MobileVit_YoloV4, self).__init__()
         if cfg_train.backbone == "mobilevitv1":
             # 80,80,96；40,40,128；20,20,640
             self.backbone = mobilevit_v1(pretrained=cfg_train.pretrained, weight_path=cfg_train.weights_path)
             in_filters = [96, 128, 640]
+        elif cfg_train.backbone == "mobilevit_xxs":
+            # 80,80,96；40,40,128；20,20,640
+            self.backbone = mobilevit_xxs(pretrained=cfg_train.pretrained, weight_path=cfg_train.weights_path)
+            in_filters = [48, 64, 320]
         else:
             raise ValueError('Unsupported backbone - `{}`, Use mobilevitv1.'.format(cfg_train.backbone))
 
@@ -27,21 +31,21 @@ class MobileVit_YoloV4(nn.Module):
         self.conv_for_P3 = conv2d(in_filters[0], 128, 1)
         self.make_five_conv2 = make_five_conv([128, 256], 256)
 
-        self.num_classes = len(cfg_data.names)
+        self.num_classes = num_classes
         # 3*(5+num_classes) = 3*(5+20) = 3*(4+1+20)=75
-        self.yolo_head3 = yolo_head([256, len(cfg_data.anchors_mask[0]) * (5 + self.num_classes)], 128)
+        self.yolo_head3 = yolo_head([256, len(cfg_train.anchors_mask[0]) * (5 + self.num_classes)], 128)
 
         self.down_sample1 = conv_dw(128, 256, stride=2)
         self.make_five_conv3 = make_five_conv([256, 512], 512)
 
         # 3*(5+num_classes) = 3*(5+20) = 3*(4+1+20)=75
-        self.yolo_head2 = yolo_head([512, len(cfg_data.anchors_mask[1]) * (5 + self.num_classes)], 256)
+        self.yolo_head2 = yolo_head([512, len(cfg_train.anchors_mask[1]) * (5 + self.num_classes)], 256)
 
         self.down_sample2 = conv_dw(256, 512, stride=2)
         self.make_five_conv4 = make_five_conv([512, 1024], 1024)
 
         # 3*(5+num_classes)=3*(5+20)=3*(4+1+20)=75
-        self.yolo_head1 = yolo_head([1024, len(cfg_data.anchors_mask[2]) * (5 + self.num_classes)], 512)
+        self.yolo_head1 = yolo_head([1024, len(cfg_train.anchors_mask[2]) * (5 + self.num_classes)], 512)
 
     def forward(self, x):
         #  backbone

@@ -66,8 +66,8 @@ class MobileViT(nn.Module):
             nn.Conv2d(in_channels=features_list[9], out_channels=features_list[10], kernel_size=1, stride=1, padding=0)
         )
         # classification layer
-        # self.avgpool = nn.AvgPool2d(kernel_size=img_size // 32)
-        # self.fc = nn.Linear(features_list[10], num_classes)
+        self.avgpool = nn.AvgPool2d(kernel_size=img_size // 32)
+        self.fc = nn.Linear(features_list[10], num_classes)
 
     def forward(self, x):
         # Stem
@@ -117,6 +117,18 @@ def mobilevit_v1(pretrained=False, img_size=640, weight_path=''):
         model_s.load_state_dict(state_dict)
     return model_s
 
+def mobilevit_xxs(pretrained=False, img_size=640, weight_path=''):
+    cfg = model_cfg["xxs"]
+    model = MobileViT(img_size, cfg["features"], cfg["d"], cfg["layers"], cfg["expansion_ratio"])
+    if pretrained:
+        print("[INFO] Pretrained from {}".format(weight_path))
+        state_dict = torch.load(weight_path, map_location=torch.device('cpu'))['state_dict']
+
+        for key in list(state_dict.keys()):
+            state_dict[key.replace('module.', '')] = state_dict.pop(key)
+
+        model.load_state_dict(state_dict)
+    return model
 
 if __name__ == "__main__":
     # img = torch.randn(1, 3, 256, 256)
@@ -128,7 +140,7 @@ if __name__ == "__main__":
     # cfg_xs = model_cfg["xs"]
     # model_xs = MobileViT(256, cfg_xs["features"], cfg_xs["d"], cfg_xs["layers"], cfg_xs["expansion_ratio"])
 
-    cfg_s = model_cfg["s"]
+    cfg_s = model_cfg["xxs"]
     model_s = MobileViT(640, cfg_s["features"], cfg_s["d"], cfg_s["layers"], cfg_s["expansion_ratio"])
 
     print(model_s)

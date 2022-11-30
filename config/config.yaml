@@ -1,8 +1,10 @@
 # network
 input_shape: [640, 640]
-weights_path: config/model_best.pth.tar
-backbone: mobilevitv1
+weights_path: config/xxsmodel_best.pth.tar
+# mobilevit_xxs, mobilevitv1
+backbone: mobilevit_xxs
 pretrained: True
+anchors_mask: [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
 
 # data
 mosaic: True
@@ -19,17 +21,23 @@ focal_alpha: 0.25
 focal_gamma: 2
 
 # train & eval
+train: config/train.txt  # format: [img_path xmin ymin xmax ymax class_id]
+val: config/val.txt
+test: config/test.txt
 cuda: True
 init_epoch: 0
 freeze_train: True
-freeze_epoch: 50
+freeze_epoch: 10
 freeze_batch_size: 32
-unfreeze_epoch: 300
-unfreeze_batch_size: 16
-save_period: 10
+unfreeze_epoch: 100
+unfreeze_batch_size: 8
+save_period: 5
 save_dir: logs
 eval_flag: True
-eval_period: 10
+eval_period: 5
+# fp16 and fp32 train together
+mixed_precision: True
+ema: True
 
 # optimizer
 init_lr: 0.01

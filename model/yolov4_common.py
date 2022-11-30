@@ -5,6 +5,8 @@ import numpy as np
 import torch
 from torch import nn
 
+from utils.utils import get_classes, get_anchors
+
 
 class SpatialPyramidPooling(nn.Module):
     def __init__(self, pool_sizes=[5, 9, 13]):
@@ -87,18 +89,20 @@ def yolo_head(filters_list, in_filters):
 
 
 class YOLOV4Loss(nn.Module):
-    def __init__(self, cfg_data, cfg_train):
+    def __init__(self, args, cfg_train):
         super(YOLOV4Loss, self).__init__()
+        class_names, num_classes = get_classes(args.classes_path)
+        anchors, num_anchors = get_anchors(args.anchors_path)
         # -----------------------------------------------------------#
         #   20x20的特征层对应的anchor是[142, 110],[192, 243],[459, 401]
         #   40x40的特征层对应的anchor是[36, 75],[76, 55],[72, 146]
         #   80x80的特征层对应的anchor是[12, 16],[19, 36],[40, 28]
         # -----------------------------------------------------------#
-        self.anchors = np.array(cfg_data.anchors).reshape(-1, 2)
-        self.num_classes = len(cfg_data.names)
-        self.bbox_attrs = 5 + len(cfg_data.names)
+        self.anchors = anchors
+        self.num_classes = num_classes
+        self.bbox_attrs = 5 + num_classes
         self.input_shape = cfg_train.input_shape
-        self.anchors_mask = cfg_data.anchors_mask
+        self.anchors_mask = cfg_train.anchors_mask
         self.label_smoothing = cfg_train.label_smoothing
 
         self.balance = [0.4, 1.0, 4]
@@ -377,6 +381,7 @@ class YOLOV4Loss(nn.Module):
         for b in range(bs):
             if len(targets[b]) == 0:
                 continue
+            # [num_gt, 5]
             batch_target = torch.zeros_like(targets[b])
             # -------------------------------------------------------#
             #   计算出正样本在特征层上的中心点
